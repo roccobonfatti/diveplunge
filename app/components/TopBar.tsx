@@ -1,130 +1,147 @@
 "use client";
 
-import { useState } from "react";
+import { useRef } from "react";
 import type { WaterType } from "../types";
 
 type Props = {
   onSearchPlace: (q: string) => void;
   waterType: WaterType | "all";
-  onWaterTypeChange: (t: WaterType | "all") => void;
+  onWaterTypeChange: (v: WaterType | "all") => void;
   minDifficulty: number;
-  onMinDifficultyChange: (n: number) => void;
+  onMinDifficultyChange: (v: number) => void;
   minRating: number;
-  onMinRatingChange: (n: number) => void;
+  onMinRatingChange: (v: number) => void;
 };
 
-export default function TopBar(p: Props) {
-  const [q, setQ] = useState("");
+export default function TopBar({
+  onSearchPlace,
+  waterType,
+  onWaterTypeChange,
+  minDifficulty,
+  onMinDifficultyChange,
+  minRating,
+  onMinRatingChange,
+}: Props) {
+  const qRef = useRef<HTMLInputElement>(null);
 
+  // wrapper “pill” flottante, sotto l’header
   const wrap: React.CSSProperties = {
     position: "fixed",
-    top: 16,
+    top: 100, // header è ~88px, così c’è aria
     left: "50%",
     transform: "translateX(-50%)",
-    zIndex: 5000,
-    fontFamily:
-      "system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif",
+    zIndex: 4000,
+    pointerEvents: "none", // non blocca la mappa
+    width: "min(960px, calc(100% - 32px))",
   };
 
-  const box: React.CSSProperties = {
+  const inner: React.CSSProperties = {
+    pointerEvents: "auto", // elementi cliccabili
     display: "flex",
     alignItems: "center",
-    gap: 8,
-    padding: "8px 12px",
-    borderRadius: 16,
+    gap: 10,
+    padding: "10px 12px",
     background: "rgba(255,255,255,0.9)",
-    boxShadow: "0 8px 24px rgba(0,0,0,0.12)",
+    backdropFilter: "blur(10px)",
+    WebkitBackdropFilter: "blur(10px)",
+    borderRadius: 14,
+    border: "1px solid rgba(0,0,0,0.08)",
+    boxShadow: "0 10px 30px rgba(0,0,0,.12)",
   };
 
   const input: React.CSSProperties = {
-    width: 360,
-    maxWidth: "60vw",
-    fontSize: 14,
-    padding: "6px 8px",
-    border: "1px solid #e5e7eb",
-    borderRadius: 8,
+    flex: 1,
+    height: 38,
+    padding: "0 12px",
+    borderRadius: 10,
+    border: "1px solid rgba(0,0,0,0.12)",
     outline: "none",
-    background: "#fff",
+    fontSize: 14,
   };
 
   const select: React.CSSProperties = {
-    fontSize: 14,
-    padding: "6px 8px",
-    border: "1px solid #e5e7eb",
-    borderRadius: 8,
+    height: 38,
+    borderRadius: 10,
+    border: "1px solid rgba(0,0,0,0.12)",
     background: "#fff",
+    padding: "0 10px",
+    fontSize: 14,
   };
 
   const btn: React.CSSProperties = {
-    fontSize: 14,
-    padding: "6px 12px",
-    borderRadius: 8,
-    border: "none",
+    height: 38,
+    borderRadius: 10,
+    border: "1px solid rgba(9,60,120,0.15)",
+    background: "linear-gradient(180deg, #0E66C2, #0A53A1)",
     color: "#fff",
-    background: "#2563eb",
+    padding: "0 14px",
+    fontWeight: 600,
     cursor: "pointer",
   };
 
-  // --- HANDLER TIPIZZATO: niente `any`
-  const handleWaterTypeChange: React.ChangeEventHandler<HTMLSelectElement> = (e) => {
-    const value = e.target.value as "all" | WaterType;
-    p.onWaterTypeChange(value);
-  };
+  function handleSearch() {
+    const q = qRef.current?.value?.trim() || "";
+    if (q) onSearchPlace(q);
+  }
+
+  function handleEnter(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (e.key === "Enter") handleSearch();
+  }
 
   return (
     <div style={wrap}>
-      <div style={box}>
+      <div style={inner}>
+        {/* Ricerca */}
         <input
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && p.onSearchPlace(q)}
-          placeholder="Cerca città o luogo (es. Cagliari)…"
+          ref={qRef}
           style={input}
+          placeholder="Cerca città o luogo (es. Cagliari)…"
+          onKeyDown={handleEnter}
         />
 
+        {/* Tipo acqua */}
         <select
-          value={p.waterType}
-          onChange={handleWaterTypeChange}
           style={select}
-          aria-label="Tipo di acqua"
+          value={waterType}
+          onChange={(e) => onWaterTypeChange(e.target.value as WaterType | "all")}
+          title="Tipo d'acqua"
         >
           <option value="all">Tutte le acque</option>
-          <option value="sea">Mare</option>
-          <option value="river">Fiume</option>
-          <option value="lake">Lago</option>
+          <option value="sea">Sea</option>
+          <option value="river">River</option>
+          <option value="lake">Lake</option>
         </select>
 
-        <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 14 }}>
-          Diff. ≥
-          <select
-            value={p.minDifficulty}
-            onChange={(e) => p.onMinDifficultyChange(Number(e.target.value))}
-            style={select}
-          >
-            {[1, 2, 3, 4, 5].map((n) => (
-              <option key={n} value={n}>
-                {n}
-              </option>
-            ))}
-          </select>
-        </label>
+        {/* Min difficoltà */}
+        <select
+          style={select}
+          value={minDifficulty}
+          onChange={(e) => onMinDifficultyChange(parseInt(e.target.value, 10))}
+          title="Difficoltà minima"
+        >
+          {[1, 2, 3, 4, 5].map((n) => (
+            <option key={n} value={n}>
+              Diff ≥ {n}
+            </option>
+          ))}
+        </select>
 
-        <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 14 }}>
-          Rating ≥
-          <select
-            value={p.minRating}
-            onChange={(e) => p.onMinRatingChange(Number(e.target.value))}
-            style={select}
-          >
-            {[1, 2, 3, 4, 5].map((n) => (
-              <option key={n} value={n}>
-                {n}
-              </option>
-            ))}
-          </select>
-        </label>
+        {/* Min rating */}
+        <select
+          style={select}
+          value={minRating}
+          onChange={(e) => onMinRatingChange(parseInt(e.target.value, 10))}
+          title="Rating minimo"
+        >
+          {[1, 2, 3, 4, 5].map((n) => (
+            <option key={n} value={n}>
+              Rating ≥ {n}
+            </option>
+          ))}
+        </select>
 
-        <button onClick={() => p.onSearchPlace(q)} style={btn}>
+        {/* Cerca */}
+        <button style={btn} onClick={handleSearch}>
           Cerca
         </button>
       </div>
