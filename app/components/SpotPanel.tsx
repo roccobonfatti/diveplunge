@@ -8,78 +8,6 @@ type Props = {
   onClose: () => void;
 };
 
-const wrap: React.CSSProperties = {
-  position: "fixed",
-  top: 88, // sotto l'header
-  right: 16,
-  bottom: 16,
-  width: 360,
-  background: "#fff",
-  borderRadius: 16,
-  boxShadow: "0 10px 30px rgba(0,0,0,.18)",
-  zIndex: 4000,
-  overflow: "hidden",
-  display: "flex",
-  flexDirection: "column",
-};
-
-const headerImg: React.CSSProperties = {
-  width: "100%",
-  height: 180,
-  objectFit: "cover",
-  display: "block",
-  background: "#eaeaea",
-};
-
-const content: React.CSSProperties = {
-  padding: 16,
-  overflow: "auto",
-  flex: 1,
-};
-
-const title: React.CSSProperties = {
-  fontSize: 22,
-  fontWeight: 700,
-  lineHeight: 1.2,
-  marginBottom: 4,
-};
-
-const sub: React.CSSProperties = {
-  fontSize: 12,
-  color: "#667085",
-};
-
-const row: React.CSSProperties = {
-  marginTop: 12,
-};
-
-const label: React.CSSProperties = {
-  fontSize: 12,
-  color: "#6b7280",
-};
-
-const value: React.CSSProperties = {
-  fontSize: 14,
-  color: "#111827",
-};
-
-const footer: React.CSSProperties = {
-  padding: 12,
-  borderTop: "1px solid #eef2f7",
-  display: "flex",
-  gap: 8,
-};
-
-const btn: React.CSSProperties = {
-  flex: 1,
-  padding: "10px 12px",
-  borderRadius: 10,
-  fontWeight: 600,
-  border: "1px solid #d0d7e2",
-  background: "#fff",
-  cursor: "pointer",
-};
-
 export default function SpotPanel({ spot, onClose }: Props) {
   if (!spot) return null;
 
@@ -94,67 +22,133 @@ export default function SpotPanel({ spot, onClose }: Props) {
     season,
     warnings,
     notes,
-    photo,
-  } = spot as Spot;
+    heightMeters,
+  } = spot;
+
+  const wrap: React.CSSProperties = {
+    position: "fixed",
+    top: 100, // sotto l’header
+    right: 16,
+    width: 360,
+    maxWidth: "calc(100% - 32px)",
+    zIndex: 4000,
+    background: "#fff",
+    borderRadius: 12,
+    boxShadow: "0 12px 28px rgba(0,0,0,.18)",
+    overflow: "hidden",
+    border: "1px solid rgba(0,0,0,.06)",
+  };
+
+  const head: React.CSSProperties = {
+    padding: "14px 16px",
+    borderBottom: "1px solid rgba(0,0,0,.06)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 8,
+  };
+
+  const title: React.CSSProperties = {
+    fontSize: 18,
+    fontWeight: 700,
+    lineHeight: 1.2,
+  };
+
+  const closeBtn: React.CSSProperties = {
+    border: "1px solid rgba(0,0,0,.12)",
+    background: "#f7f7f7",
+    borderRadius: 8,
+    padding: "6px 10px",
+    cursor: "pointer",
+  };
+
+  const body: React.CSSProperties = {
+    padding: 16,
+  };
+
+  const label: React.CSSProperties = {
+    fontSize: 12,
+    textTransform: "uppercase",
+    letterSpacing: 0.4,
+    color: "#667085",
+  };
+
+  const valueCss: React.CSSProperties = {
+    fontSize: 14,
+    fontWeight: 500,
+  };
+
+  const row: React.CSSProperties = { marginTop: 12 };
+
+  const coordLine =
+    (country ? `${country} – ` : "") +
+    `${lat.toFixed(6)}, ${lon.toFixed(6)}`;
 
   return (
-    <aside style={wrap}>
-      {/* immagine */}
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        alt={name ?? "photo"}
-        src={photo ?? "/vercel.svg"}
-        style={headerImg}
-      />
+    <aside style={wrap} aria-label="Spot details panel">
+      <div style={head}>
+        <div style={title}>{name}</div>
+        <button type="button" onClick={onClose} style={closeBtn}>
+          Chiudi
+        </button>
+      </div>
 
-      <div style={content}>
-        <div style={title}>{name ?? "Spot"}</div>
-        <div style={sub}>
-          {(country ?? "Italy") + " "}
-          {lat != null && lon != null ? `• ${lat}, ${lon}` : ""}
-        </div>
-
+      <div style={body}>
         <div style={row}>
-          <div style={label}>Water</div>
-          <div style={value}>{waterType ?? "—"}</div>
-        </div>
-
-        <div style={row}>
-          <div style={label}>Difficulty</div>
-          <div style={value}>{difficulty ?? "—"}</div>
-        </div>
-
-        <div style={row}>
-          <div style={label}>Rating</div>
-          <div style={value}>{rating ?? "—"}</div>
-        </div>
-
-        <div style={row}>
-          <div style={label}>Season</div>
-          <div style={value}>{season ?? "—"}</div>
-        </div>
-
-        <div style={row}>
-          <div style={label}>Warnings</div>
-          {/* QUI il fix: un solo style, unito */}
-          <div style={{ ...value, fontWeight: 500 }} title={warnings ?? ""}>
-            {warnings ?? "—"}
+          <div style={label}>Posizione</div>
+          <div style={valueCss} title={coordLine}>
+            {coordLine}
           </div>
         </div>
 
         <div style={row}>
-          <div style={label}>Notes</div>
-          <div style={value}>{notes ?? "—"}</div>
+          <div style={label}>Tipo acqua</div>
+          <div style={valueCss}>{waterType}</div>
         </div>
-      </div>
 
-      <div style={footer}>
-        <button style={btn} onClick={onClose}>
-          Close
-        </button>
-        <button style={{ ...btn, background: "#0b2a4a", color: "#fff" }}>
-          Add to My Visits
-        </button>
+        {typeof difficulty === "number" && (
+          <div style={row}>
+            <div style={label}>Difficoltà</div>
+            <div style={valueCss}>{difficulty}</div>
+          </div>
+        )}
+
+        {typeof rating === "number" && (
+          <div style={row}>
+            <div style={label}>Rating</div>
+            <div style={valueCss}>{rating}</div>
+          </div>
+        )}
+
+        {typeof heightMeters === "number" && (
+          <div style={row}>
+            <div style={label}>Altezza (m)</div>
+            <div style={valueCss}>{heightMeters}</div>
+          </div>
+        )}
+
+        {season && (
+          <div style={row}>
+            <div style={label}>Stagione</div>
+            <div style={valueCss}>{season}</div>
+          </div>
+        )}
+
+        {warnings && (
+          <div style={row}>
+            <div style={label}>Avvertenze</div>
+            <div style={valueCss} title={warnings}>
+              {warnings}
+            </div>
+          </div>
+        )}
+
+        {notes && (
+          <div style={row}>
+            <div style={label}>Note</div>
+            <div style={valueCss}>{notes}</div>
+          </div>
+        )}
       </div>
     </aside>
   );

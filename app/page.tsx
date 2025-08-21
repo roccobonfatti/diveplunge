@@ -24,7 +24,7 @@ export default function Home() {
       <main
         style={{
           position: "fixed",
-          top: HEADER_HEIGHT, // 88px
+          top: HEADER_HEIGHT, // es. 88px
           left: 0,
           right: 0,
           bottom: 0,
@@ -33,10 +33,11 @@ export default function Home() {
         <Map
           center={center}
           spots={ALL_SPOTS}
-          onSpotClick={(s) => setSelected(s)}
+          // Cast a Spot del nostro types, per allineare i tipi
+          onSpotClick={(s) => setSelected(s as Spot)}
         />
 
-        {/* Slogan in basso a sinistra (sempre visibile) */}
+        {/* Slogan in basso a sinistra */}
         <div
           style={{
             position: "fixed",
@@ -52,7 +53,8 @@ export default function Home() {
               "system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif",
           }}
         >
-          <span style={{ fontWeight: 600 }}>diveplunge</span> — Breath. Jump. Live.
+          <span style={{ fontWeight: 600 }}>diveplunge</span> — Breath. Jump.
+          Live.
         </div>
 
         {/* Pannello spot a destra (selezionato) */}
