@@ -1,66 +1,51 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { supabase } from "@/app/lib/supabase";
 
-export default function AuthCallbackPage() {
+export default function AuthCallback() {
+  const sp = useSearchParams();
   const router = useRouter();
-  const [msg, setMsg] = useState<string>("Sto completando l’accesso...");
+  const [msg, setMsg] = useState("Sto completando l'accesso...");
 
   useEffect(() => {
-    const run = async () => {
-      try {
-        const params = new URLSearchParams(window.location.search);
-        const code = params.get("code");
+    async function run() {
+      const codeParam = sp.get("code");
+      const code = Array.isArray(codeParam) ? codeParam[0] : codeParam || "";
 
-        if (!code) {
-          setMsg("Codice di autorizzazione mancante.");
-          return;
-        }
-
-        // Forza la firma in modo agnostico (niente errori di tipi in build)
-        const { error } = await (supabase.auth as any).exchangeCodeForSession(code);
-
-        if (error) {
-          setMsg(`Errore durante l’accesso: ${error.message ?? String(error)}`);
-          return;
-        }
-
-        router.replace("/");
-      } catch (e: any) {
-        setMsg(`Errore inatteso: ${e?.message ?? String(e)}`);
+      if (!code) {
+        setMsg("Codice mancante. Riprova ad accedere.");
+        return;
       }
-    };
 
+      try {
+        // Prova firma nuova: { code }
+        const anyAuth = supabase.auth as any;
+        if (typeof anyAuth.exchangeCodeForSession === "function") {
+          let res = await anyAuth.exchangeCodeForSession({ code });
+          if (res?.error) {
+            // fallback firma vecchia: (code)
+            res = await anyAuth.exchangeCodeForSession(code);
+            if (res?.error) throw res.error;
+          }
+          setMsg("Accesso completato, reindirizzamento...");
+          router.replace("/");
+          return;
+        }
+        setMsg("SDK auth non disponibile. Riprova.");
+      } catch (err: any) {
+        setMsg(err?.message || "Errore durante l'accesso.");
+      }
+    }
     run();
-  }, [router]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
-    <div
-      style={{
-        minHeight: "100dvh",
-        display: "grid",
-        placeItems: "center",
-        fontFamily:
-          'system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji"',
-      }}
-    >
-      <div
-        style={{
-          background: "white",
-          border: "1px solid #e5e7eb",
-          borderRadius: 12,
-          padding: 20,
-          boxShadow: "0 10px 25px rgba(0,0,0,.08)",
-          maxWidth: 520,
-        }}
-      >
-        <div style={{ fontWeight: 700, fontSize: 18, marginBottom: 6 }}>
-          Accesso in corso…
-        </div>
-        <div style={{ color: "#4b5563" }}>{msg}</div>
-      </div>
-    </div>
+    <main style={{ padding: 24, maxWidth: 480, margin: "88px auto 32px" }}>
+      <h1 style={{ fontSize: 24, fontWeight: 800, marginBottom: 12 }}>diveplunge</h1>
+      <p>{msg}</p>
+    </main>
   );
 }

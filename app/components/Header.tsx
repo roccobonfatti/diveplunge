@@ -1,68 +1,26 @@
+// app/components/Header.tsx
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-// NOTE: se nel tuo progetto lib/supabase esporta default, questa import va bene.
-// Se invece esporta { supabase } nominale, cambia in:  import { supabase } from "../lib/supabase";
-import supabase from "../lib/supabase";
+import Link from "next/link";
+import { useEffect, useState } from "react";
+import { supabase } from "../lib/supabase";
 
 export const HEADER_HEIGHT = 88;
 
-type Props = {
-  onCreateSpot?: () => void;   // apre form "Crea spot" (la guardia login è in page.tsx)
-  onLogin?: () => void;        // azione “Accedi / Registrati”
-};
+export default function Header() {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [user, setUser] = useState<null | { email?: string }>(null);
 
-export default function Header({ onCreateSpot, onLogin }: Props) {
-  const [userEmail, setUserEmail] = useState<string | null>(null);
-  const [displayName, setDisplayName] = useState<string | null>(null);
-  const [open, setOpen] = useState(false);
-  const menuRef = useRef<HTMLDivElement | null>(null);
-
-  // ---- stato auth + nome visualizzato ----
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
-      const u = data.user;
-      if (u) {
-        setUserEmail(u.email ?? null);
-        const nameFromMeta =
-          (u.user_metadata && (u.user_metadata.full_name || u.user_metadata.name)) || null;
-        const nameFromEmail = u.email ? u.email.split("@")[0] : null;
-        setDisplayName(nameFromMeta || nameFromEmail || "Utente");
-      } else {
-        setUserEmail(null);
-        setDisplayName(null);
-      }
+      const u = data?.user ?? null;
+      setUser(u as any);
     });
-    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
-      const u = session?.user ?? null;
-      if (u) {
-        setUserEmail(u.email ?? null);
-        const nameFromMeta =
-          (u.user_metadata && (u.user_metadata.full_name || u.user_metadata.name)) || null;
-        const nameFromEmail = u.email ? u.email.split("@")[0] : null;
-        setDisplayName(nameFromMeta || nameFromEmail || "Utente");
-      } else {
-        setUserEmail(null);
-        setDisplayName(null);
-      }
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => {
+      setUser((s?.user as any) ?? null);
     });
     return () => sub.subscription.unsubscribe();
   }, []);
-
-  // chiudi menu clic fuori
-  useEffect(() => {
-    function onDocClick(e: MouseEvent) {
-      if (!menuRef.current) return;
-      if (!menuRef.current.contains(e.target as Node)) setOpen(false);
-    }
-    document.addEventListener("click", onDocClick);
-    return () => document.removeEventListener("click", onDocClick);
-  }, []);
-
-  async function logout() {
-    await supabase.auth.signOut();
-    setOpen(false);
-  }
 
   const wrap: React.CSSProperties = {
     position: "fixed",
@@ -87,14 +45,6 @@ export default function Header({ onCreateSpot, onLogin }: Props) {
     padding: "0 20px",
   };
 
-  const brandLeft: React.CSSProperties = {
-    fontWeight: 700,
-    fontSize: 26,
-    letterSpacing: 0.2,
-    color: "#E8F1FF",
-    textTransform: "lowercase",
-  };
-
   const centerBox: React.CSSProperties = {
     position: "absolute",
     left: "50%",
@@ -110,145 +60,126 @@ export default function Header({ onCreateSpot, onLogin }: Props) {
     letterSpacing: 0.5,
     color: "#FFFFFF",
     lineHeight: 1,
-    textTransform: "lowercase",
   };
 
   const slogan: React.CSSProperties = {
     marginTop: 4,
-    fontSize: 18,
+    fontSize: 16, // un po' più grande
     opacity: 0.95,
   };
 
-  const rightBtn: React.CSSProperties = {
+  const avatarBtn: React.CSSProperties = {
+    display: "flex",
+    alignItems: "center",
+    gap: 10,
     color: "#D6E8FF",
     textDecoration: "none",
     fontSize: 15,
     fontWeight: 600,
-    padding: "8px 12px 8px 8px", // lasciamo spazio per l'avatar
-    borderRadius: 10,
+    padding: "6px 10px",
+    borderRadius: 999,
     background: "rgba(255,255,255,0.06)",
     border: "1px solid rgba(255,255,255,0.12)",
     cursor: "pointer",
-    display: "flex",
-    alignItems: "center",
-    gap: 8,
   };
 
   const avatar: React.CSSProperties = {
     width: 28,
     height: 28,
     borderRadius: "50%",
-    background:
-      "linear-gradient(135deg, rgba(230,240,250,.9), rgba(255,255,255,.5))",
-    color: "#0B2A4A",
+    background: "#93c5fd",
     display: "grid",
     placeItems: "center",
-    fontWeight: 800,
-    fontSize: 13,
-    boxShadow: "0 1px 2px rgba(0,0,0,.25) inset",
-  };
-
-  const menu: React.CSSProperties = {
-    position: "absolute",
-    right: 0,
-    top: HEADER_HEIGHT - 6,
-    background: "white",
     color: "#0B2A4A",
-    borderRadius: 12,
-    boxShadow: "0 10px 30px rgba(0,0,0,.2)",
-    minWidth: 260,
-    overflow: "hidden",
+    fontWeight: 800,
   };
-
-  const item: React.CSSProperties = {
-    padding: "10px 14px",
-    fontSize: 14,
-    fontWeight: 600,
-    cursor: "pointer",
-    borderBottom: "1px solid #eef2f7",
-    userSelect: "none",
-  };
-
-  const headerItem: React.CSSProperties = {
-    padding: "12px 14px",
-    borderBottom: "1px solid #eef2f7",
-    background: "#f7fafc",
-  };
-
-  // iniziale nell'avatar
-  const initial =
-    (displayName && displayName[0]?.toUpperCase()) ||
-    (userEmail && userEmail[0]?.toUpperCase()) ||
-    "U";
 
   return (
     <header style={wrap}>
       <div style={inner}>
-        <div style={brandLeft}>diveplunge</div>
+        <div style={{ fontWeight: 700, fontSize: 26, color: "#E8F1FF" }}>
+          diveplunge
+        </div>
 
         <div style={centerBox}>
           <div style={title}>diveplunge</div>
           <div style={slogan}>Breath. Jump. Live.</div>
         </div>
 
-        <div ref={menuRef} style={{ position: "relative" }}>
-          <button style={rightBtn} onClick={() => setOpen((v) => !v)}>
-            {/* avatar a sinistra del testo "Profilo" (solo se loggato) */}
-            {userEmail ? <div style={avatar}>{initial}</div> : null}
-            <span>Profilo</span>
+        <div style={{ position: "relative" }}>
+          <button
+            style={avatarBtn}
+            onClick={() => setMenuOpen((v) => !v)}
+            aria-haspopup="menu"
+            aria-expanded={menuOpen}
+          >
+            <span style={avatar}>
+              {user?.email ? user.email.substring(0, 1).toUpperCase() : "•"}
+            </span>
+            Profilo
           </button>
 
-          {open && (
-            <div style={menu}>
-              {!userEmail ? (
-                // Non loggato: una sola voce per accedere/registrarsi
-                <div
-                  style={{ ...item, borderBottom: "none" }}
-                  onClick={() => {
-                    setOpen(false);
-                    onLogin?.();
-                  }}
+          {menuOpen && (
+            <div
+              role="menu"
+              style={{
+                position: "absolute",
+                right: 0,
+                top: 44,
+                minWidth: 220,
+                background: "white",
+                color: "#0B2A4A",
+                borderRadius: 12,
+                boxShadow: "0 12px 30px rgba(0,0,0,.18)",
+                overflow: "hidden",
+                zIndex: 9999,
+              }}
+            >
+              <div style={{ padding: "10px 12px", fontWeight: 700 }}>
+                {user?.email ?? "Ospite"}
+              </div>
+              <div style={{ height: 1, background: "#eef2f7" }} />
+              {!user && (
+                <Link
+                  href="/login"
+                  onClick={() => setMenuOpen(false)}
+                  style={menuItem}
                 >
-                  🔐 Accedi / Registrati
-                </div>
-              ) : (
+                  Accedi / Registrati
+                </Link>
+              )}
+              {user && (
                 <>
-                  {/* PRIMA RIGA: nome utente */}
-                  <div style={headerItem}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                      <div style={{ ...avatar, width: 36, height: 36, fontSize: 16 }}>
-                        {initial}
-                      </div>
-                      <div>
-                        <div style={{ fontWeight: 800 }}>{displayName}</div>
-                        <div style={{ fontSize: 12, opacity: 0.7 }}>{userEmail}</div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div
-                    style={item}
-                    onClick={() => {
-                      setOpen(false);
-                      onCreateSpot?.();
-                    }}
+                  <Link
+                    href="/create"
+                    onClick={() => setMenuOpen(false)}
+                    style={menuItem}
                   >
-                    ➕ Crea spot
-                  </div>
-                  <div style={item} onClick={() => alert("Preferiti in arrivo")}>
-                    ⭐ Preferiti
-                  </div>
-                  <div style={item} onClick={() => alert("Impostazioni in arrivo")}>
-                    ⚙️ Impostazioni
-                  </div>
-                  <div
-                    style={{ ...item, borderBottom: "none", color: "#B00020" }}
+                    Crea spot
+                  </Link>
+                  <Link
+                    href="/favorites"
+                    onClick={() => setMenuOpen(false)}
+                    style={menuItem}
+                  >
+                    Preferiti
+                  </Link>
+                  <Link
+                    href="/settings"
+                    onClick={() => setMenuOpen(false)}
+                    style={menuItem}
+                  >
+                    Impostazioni
+                  </Link>
+                  <button
                     onClick={async () => {
-                      await logout();
+                      await supabase.auth.signOut();
+                      setMenuOpen(false);
                     }}
+                    style={{ ...menuItem, width: "100%", textAlign: "left" }}
                   >
-                    ⎋ Esci
-                  </div>
+                    Esci
+                  </button>
                 </>
               )}
             </div>
@@ -258,3 +189,11 @@ export default function Header({ onCreateSpot, onLogin }: Props) {
     </header>
   );
 }
+
+const menuItem: React.CSSProperties = {
+  display: "block",
+  padding: "10px 12px",
+  textDecoration: "none",
+  color: "#0B2A4A",
+  fontWeight: 600,
+};

@@ -1,147 +1,111 @@
 "use client";
 
 import { useRef } from "react";
-import type { WaterType } from "../types";
+import type { WaterType } from "@/app/types";
 
 type Props = {
   onSearchPlace: (q: string) => void;
-  waterType: WaterType | "all";
-  onWaterTypeChange: (v: WaterType | "all") => void;
-  minDifficulty: number;
-  onMinDifficultyChange: (v: number) => void;
-  minRating: number;
-  onMinRatingChange: (v: number) => void;
+  onFilterType?: (t: WaterType) => void;
+  onMinDiff?: (d: number) => void;
+  onMinRating?: (r: number) => void;
 };
 
 export default function TopBar({
   onSearchPlace,
-  waterType,
-  onWaterTypeChange,
-  minDifficulty,
-  onMinDifficultyChange,
-  minRating,
-  onMinRatingChange,
+  onFilterType,
+  onMinDiff,
+  onMinRating,
 }: Props) {
-  const qRef = useRef<HTMLInputElement>(null);
-
-  // wrapper “pill” flottante, sotto l’header
-  const wrap: React.CSSProperties = {
-    position: "fixed",
-    top: 100, // header è ~88px, così c’è aria
-    left: "50%",
-    transform: "translateX(-50%)",
-    zIndex: 4000,
-    pointerEvents: "none", // non blocca la mappa
-    width: "min(960px, calc(100% - 32px))",
-  };
-
-  const inner: React.CSSProperties = {
-    pointerEvents: "auto", // elementi cliccabili
-    display: "flex",
-    alignItems: "center",
-    gap: 10,
-    padding: "10px 12px",
-    background: "rgba(255,255,255,0.9)",
-    backdropFilter: "blur(10px)",
-    WebkitBackdropFilter: "blur(10px)",
-    borderRadius: 14,
-    border: "1px solid rgba(0,0,0,0.08)",
-    boxShadow: "0 10px 30px rgba(0,0,0,.12)",
-  };
-
-  const input: React.CSSProperties = {
-    flex: 1,
-    height: 38,
-    padding: "0 12px",
-    borderRadius: 10,
-    border: "1px solid rgba(0,0,0,0.12)",
-    outline: "none",
-    fontSize: 14,
-  };
-
-  const select: React.CSSProperties = {
-    height: 38,
-    borderRadius: 10,
-    border: "1px solid rgba(0,0,0,0.12)",
-    background: "#fff",
-    padding: "0 10px",
-    fontSize: 14,
-  };
-
-  const btn: React.CSSProperties = {
-    height: 38,
-    borderRadius: 10,
-    border: "1px solid rgba(9,60,120,0.15)",
-    background: "linear-gradient(180deg, #0E66C2, #0A53A1)",
-    color: "#fff",
-    padding: "0 14px",
-    fontWeight: 600,
-    cursor: "pointer",
-  };
-
-  function handleSearch() {
-    const q = qRef.current?.value?.trim() || "";
-    if (q) onSearchPlace(q);
-  }
-
-  function handleEnter(e: React.KeyboardEvent<HTMLInputElement>) {
-    if (e.key === "Enter") handleSearch();
-  }
+  const inputRef = useRef<HTMLInputElement>(null);
 
   return (
-    <div style={wrap}>
-      <div style={inner}>
-        {/* Ricerca */}
+    <div
+      style={{
+        position: "fixed",
+        top: 88 + 12, // sotto l’header
+        left: 0,
+        right: 0,
+        display: "flex",
+        justifyContent: "center",
+        zIndex: 6000, // >>> alto
+        pointerEvents: "none",
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          gap: 8,
+          pointerEvents: "auto",
+          background: "rgba(255,255,255,.92)",
+          border: "1px solid rgba(0,0,0,.08)",
+          boxShadow: "0 4px 24px rgba(0,0,0,.12)",
+          padding: 8,
+          borderRadius: 12,
+          backdropFilter: "saturate(1.2) blur(4px)",
+        }}
+      >
         <input
-          ref={qRef}
-          style={input}
+          ref={inputRef}
           placeholder="Cerca città o luogo (es. Cagliari)…"
-          onKeyDown={handleEnter}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && inputRef.current) {
+              onSearchPlace(inputRef.current.value);
+            }
+          }}
+          style={{
+            width: 480,
+            padding: "10px 12px",
+            border: "1px solid #d0d7e2",
+            borderRadius: 10,
+          }}
         />
 
-        {/* Tipo acqua */}
         <select
-          style={select}
-          value={waterType}
-          onChange={(e) => onWaterTypeChange(e.target.value as WaterType | "all")}
-          title="Tipo d'acqua"
+          onChange={(e) => onFilterType?.(e.target.value as WaterType)}
+          defaultValue={"all"}
+          style={{ padding: "10px 12px", borderRadius: 10, border: "1px solid #d0d7e2" }}
         >
           <option value="all">Tutte le acque</option>
-          <option value="sea">Sea</option>
-          <option value="river">River</option>
-          <option value="lake">Lake</option>
+          <option value="sea">Mare</option>
+          <option value="river">Fiume</option>
+          <option value="lake">Lago</option>
         </select>
 
-        {/* Min difficoltà */}
         <select
-          style={select}
-          value={minDifficulty}
-          onChange={(e) => onMinDifficultyChange(parseInt(e.target.value, 10))}
-          title="Difficoltà minima"
+          onChange={(e) => onMinDiff?.(parseInt(e.target.value, 10))}
+          defaultValue={1}
+          style={{ padding: "10px 12px", borderRadius: 10, border: "1px solid #d0d7e2" }}
         >
-          {[1, 2, 3, 4, 5].map((n) => (
-            <option key={n} value={n}>
-              Diff ≥ {n}
-            </option>
-          ))}
+          <option value="1">Diff ≥ 1</option>
+          <option value="2">Diff ≥ 2</option>
+          <option value="3">Diff ≥ 3</option>
+          <option value="4">Diff ≥ 4</option>
+          <option value="5">Diff ≥ 5</option>
         </select>
 
-        {/* Min rating */}
         <select
-          style={select}
-          value={minRating}
-          onChange={(e) => onMinRatingChange(parseInt(e.target.value, 10))}
-          title="Rating minimo"
+          onChange={(e) => onMinRating?.(parseInt(e.target.value, 10))}
+          defaultValue={1}
+          style={{ padding: "10px 12px", borderRadius: 10, border: "1px solid #d0d7e2" }}
         >
-          {[1, 2, 3, 4, 5].map((n) => (
-            <option key={n} value={n}>
-              Rating ≥ {n}
-            </option>
-          ))}
+          <option value="1">Rating ≥ 1</option>
+          <option value="2">Rating ≥ 2</option>
+          <option value="3">Rating ≥ 3</option>
+          <option value="4">Rating ≥ 4</option>
+          <option value="5">Rating ≥ 5</option>
         </select>
 
-        {/* Cerca */}
-        <button style={btn} onClick={handleSearch}>
+        <button
+          onClick={() => inputRef.current && onSearchPlace(inputRef.current.value)}
+          style={{
+            padding: "10px 14px",
+            borderRadius: 10,
+            background: "#0E3A65",
+            color: "white",
+            fontWeight: 700,
+            border: "none",
+          }}
+        >
           Cerca
         </button>
       </div>

@@ -1,39 +1,38 @@
 // app/lib/supabase.ts
 "use client";
 
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { createClient } from "@supabase/supabase-js";
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
 if (!url || !anon) {
-  console.error(
-    "Supabase: variabili mancanti. Assicurati di avere NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_ANON_KEY in .env.local"
-  );
+  // Solo in dev: utile per capire subito se mancano le env
+  // eslint-disable-next-line no-console
+  console.error("Supabase env mancanti. Controlla .env.local / Vercel Env.");
 }
 
-// Evita di ricreare il client ad ogni HMR (hot reload) in sviluppo
-declare global {
-  interface Window {
-    __supabase?: SupabaseClient;
-  }
+export const supabase = createClient(url, anon, {
+  auth: {
+    persistSession: false, // lato client: niente sessione persistita
+  },
+});
+
+// URL del sito (prod o preview) usato per i redirect dei magic link
+export function getSiteURL() {
+  // 1) forziamo con variabile esplicita (consigliato su Vercel)
+  const fromEnv = process.env.NEXT_PUBLIC_SITE_URL;
+  if (fromEnv) return fromEnv.replace(/\/$/, "");
+
+  // 2) fallback Vercel
+  const vercel = process.env.NEXT_PUBLIC_VERCEL_URL;
+  if (vercel) return `https://${vercel}`;
+
+  // 3) dev
+  return "http://localhost:3000";
 }
 
-const _client =
-  typeof window !== "undefined" && window.__supabase
-    ? window.__supabase
-    : createClient(url, anon, {
-        auth: {
-          persistSession: true,     // resta loggato tra i refresh
-          autoRefreshToken: true,   // rinnova il token automaticamente
-          detectSessionInUrl: true, // gestisce redirect OAuth/callback
-        },
-      });
-
-if (typeof window !== "undefined") {
-  window.__supabase = _client;
+// Redirect comune per email / OAuth
+export function authRedirectTo() {
+  return `${getSiteURL()}/auth/callback`;
 }
-
-// Esporto sia nominativo sia default per compatibilità con gli import esistenti
-export const supabase = _client;
-export default _client;
