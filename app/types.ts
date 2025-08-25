@@ -1,12 +1,19 @@
+// app/types.ts
+
+// Usato dalla TopBar per il filtro. Includo sia "all" sia "any"
+// così copriamo entrambi i casi che potresti avere in codice/UI.
+export type WaterType = "sea" | "river" | "lake" | "all" | "any";
+
+// Tipo base dello spot (accettiamo sia camelCase che snake_case)
 export type Spot = {
   id?: string | number;
   name?: string;
 
-  // camelCase (statici) e snake_case (DB)
+  // tipo acqua da statico (camel) o DB (snake)
   waterType?: string;
   water_type?: string;
 
-  // coordinate (supporto a più nomi, verranno lette in mappa)
+  // coordinate (vari alias supportati)
   lat?: number | string;
   lon?: number | string;
   lng?: number | string;
@@ -15,6 +22,11 @@ export type Spot = {
   difficulty?: number;
   rating?: number;
 
-  // altri campi eventuali (immagini, descrizioni, ecc.)
+  // altri campi liberi
   [k: string]: any;
 };
+
+// Helper opzionale: normalizza il tipo acqua in lowercase
+export function getWaterTypeValue(s: Spot): string {
+  return (s.waterType ?? s.water_type ?? "").toString().toLowerCase();
+}
