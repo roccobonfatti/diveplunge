@@ -9,7 +9,7 @@ export default function AuthCallbackPage() {
   const [msg, setMsg] = useState<string>("Sto completando l’accesso...");
 
   useEffect(() => {
-    const doExchange = async () => {
+    const run = async () => {
       try {
         const params = new URLSearchParams(window.location.search);
         const code = params.get("code");
@@ -19,34 +19,21 @@ export default function AuthCallbackPage() {
           return;
         }
 
-        // Alcune versioni accettano un oggetto { code }, altre una stringa semplice.
-        // Usiamo un wrapper compatibile, e ignoriamo i tipi per evitare il blocco in build.
-        let error: any | null = null;
-
-        try {
-          // @ts-expect-error: firma compatibile in runtime anche se i tipi differiscono
-          const res1 = await (supabase.auth as any).exchangeCodeForSession({ code });
-          error = res1?.error ?? null;
-        } catch {
-          // Fallback per versioni che accettano la stringa semplice
-          // @ts-expect-error: firma alternativa
-          const res2 = await (supabase.auth as any).exchangeCodeForSession(code);
-          error = res2?.error ?? null;
-        }
+        // Forza la firma in modo agnostico (niente errori di tipi in build)
+        const { error } = await (supabase.auth as any).exchangeCodeForSession(code);
 
         if (error) {
           setMsg(`Errore durante l’accesso: ${error.message ?? String(error)}`);
           return;
         }
 
-        // Tutto ok → porta l’utente alla home
         router.replace("/");
       } catch (e: any) {
         setMsg(`Errore inatteso: ${e?.message ?? String(e)}`);
       }
     };
 
-    doExchange();
+    run();
   }, [router]);
 
   return (
