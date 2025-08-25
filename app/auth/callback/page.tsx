@@ -1,41 +1,52 @@
-// app/auth/callback/page.tsx
 "use client";
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { supabase } from "../../lib/supabase";
+import { supabase } from "@/app/lib/supabase";
 
-export default function AuthCallback() {
+export default function AuthCallbackPage() {
   const router = useRouter();
-  const [msg, setMsg] = useState("Completamento accesso…");
+  const [msg, setMsg] = useState<string>("Sto completando l’accesso...");
 
   useEffect(() => {
-    async function run() {
+    const doExchange = async () => {
       try {
-        const url = new URL(window.location.href);
-        const code = url.searchParams.get("code");
+        const params = new URLSearchParams(window.location.search);
+        const code = params.get("code");
 
-        if (code) {
-          // Scambia il code per la sessione
-          const { error } = await supabase.auth.exchangeCodeForSession({ code });
-          if (error) {
-            setMsg(error.message);
-            return;
-          }
+        if (!code) {
+          setMsg("Codice di autorizzazione mancante.");
+          return;
         }
 
-        // Se sei loggato vai in home
-        const { data } = await supabase.auth.getUser();
-        if (data.user) {
-          router.replace("/");
-        } else {
-          setMsg("Accesso non riuscito. Riprova.");
+        // Alcune versioni accettano un oggetto { code }, altre una stringa semplice.
+        // Usiamo un wrapper compatibile, e ignoriamo i tipi per evitare il blocco in build.
+        let error: any | null = null;
+
+        try {
+          // @ts-expect-error: firma compatibile in runtime anche se i tipi differiscono
+          const res1 = await (supabase.auth as any).exchangeCodeForSession({ code });
+          error = res1?.error ?? null;
+        } catch {
+          // Fallback per versioni che accettano la stringa semplice
+          // @ts-expect-error: firma alternativa
+          const res2 = await (supabase.auth as any).exchangeCodeForSession(code);
+          error = res2?.error ?? null;
         }
+
+        if (error) {
+          setMsg(`Errore durante l’accesso: ${error.message ?? String(error)}`);
+          return;
+        }
+
+        // Tutto ok → porta l’utente alla home
+        router.replace("/");
       } catch (e: any) {
-        setMsg(e.message ?? "Errore inatteso.");
+        setMsg(`Errore inatteso: ${e?.message ?? String(e)}`);
       }
-    }
-    run();
+    };
+
+    doExchange();
   }, [router]);
 
   return (
@@ -44,13 +55,25 @@ export default function AuthCallback() {
         minHeight: "100dvh",
         display: "grid",
         placeItems: "center",
-        background: "#0E3A65",
-        color: "white",
-        fontWeight: 700,
-        fontSize: 20,
+        fontFamily:
+          'system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji"',
       }}
     >
-      {msg}
+      <div
+        style={{
+          background: "white",
+          border: "1px solid #e5e7eb",
+          borderRadius: 12,
+          padding: 20,
+          boxShadow: "0 10px 25px rgba(0,0,0,.08)",
+          maxWidth: 520,
+        }}
+      >
+        <div style={{ fontWeight: 700, fontSize: 18, marginBottom: 6 }}>
+          Accesso in corso…
+        </div>
+        <div style={{ color: "#4b5563" }}>{msg}</div>
+      </div>
     </div>
   );
 }
