@@ -1,20 +1,15 @@
-import { Metadata } from 'next';
+// app/layout.tsx
+import type { Metadata } from "next";
+import "./globals.css";
 
 export const metadata: Metadata = {
-  title: 'Diveplunge',
-  description: 'Scopri i migliori spot subacquei.',
-  openGraph: {
-    title: 'Diveplunge',
-    description: 'Scopri i migliori spot subacquei.',
-    url: 'https://diveplunge.com',
-    siteName: 'Diveplunge',
-    type: 'website'
-  }
+  title: "diveplunge",
+  description: "Breath. Jump. Live.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html>
+    <html lang="it">
       <body>{children}</body>
     </html>
   );

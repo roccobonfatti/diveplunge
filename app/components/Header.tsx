@@ -2,31 +2,43 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { supabase } from "../lib/supabase";
 
 export const HEADER_HEIGHT = 88;
 
 export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
-  const [user, setUser] = useState<null | { email?: string }>(null);
+  const [email, setEmail] = useState<string | null>(null);
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      const u = data?.user ?? null;
-      setUser(u as any);
+    let mounted = true;
+
+    const load = async () => {
+      const { data } = await supabase.auth.getUser();
+      if (!mounted) return;
+      setEmail(data.user?.email ?? null);
+    };
+    load();
+
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, sess) => {
+      setEmail(sess?.user?.email ?? null);
     });
-    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => {
-      setUser((s?.user as any) ?? null);
-    });
-    return () => sub.subscription.unsubscribe();
+
+    return () => {
+      mounted = false;
+      sub.subscription.unsubscribe();
+    };
   }, []);
+
+  const avatarLetter = useMemo(
+    () => (email ? email[0].toUpperCase() : "•"),
+    [email]
+  );
 
   const wrap: React.CSSProperties = {
     position: "fixed",
-    top: 0,
-    left: 0,
-    right: 0,
+    top: 0, left: 0, right: 0,
     height: HEADER_HEIGHT,
     background: "linear-gradient(180deg, #0B2A4A 0%, #0E3A65 100%)",
     color: "#E6F0FA",
@@ -54,133 +66,82 @@ export default function Header() {
     pointerEvents: "none",
   };
 
-  const title: React.CSSProperties = {
-    fontWeight: 800,
-    fontSize: 30,
-    letterSpacing: 0.5,
-    color: "#FFFFFF",
-    lineHeight: 1,
-  };
-
-  const slogan: React.CSSProperties = {
-    marginTop: 4,
-    fontSize: 16, // un po' più grande
-    opacity: 0.95,
-  };
-
-  const avatarBtn: React.CSSProperties = {
-    display: "flex",
-    alignItems: "center",
-    gap: 10,
-    color: "#D6E8FF",
-    textDecoration: "none",
-    fontSize: 15,
-    fontWeight: 600,
-    padding: "6px 10px",
-    borderRadius: 999,
-    background: "rgba(255,255,255,0.06)",
-    border: "1px solid rgba(255,255,255,0.12)",
-    cursor: "pointer",
-  };
-
-  const avatar: React.CSSProperties = {
-    width: 28,
-    height: 28,
-    borderRadius: "50%",
-    background: "#93c5fd",
-    display: "grid",
-    placeItems: "center",
-    color: "#0B2A4A",
-    fontWeight: 800,
-  };
-
   return (
     <header style={wrap}>
       <div style={inner}>
-        <div style={{ fontWeight: 700, fontSize: 26, color: "#E8F1FF" }}>
+        <div style={{ fontWeight: 800, fontSize: 26, color: "#E8F1FF" }}>
           diveplunge
         </div>
 
         <div style={centerBox}>
-          <div style={title}>diveplunge</div>
-          <div style={slogan}>Breath. Jump. Live.</div>
+          <div style={{ fontWeight: 900, fontSize: 32, color: "#fff", lineHeight: 1 }}>
+            diveplunge
+          </div>
+          <div style={{ marginTop: 6, fontSize: 22, opacity: .95 }}>
+            Breath. Jump. Live.
+          </div>
         </div>
 
+        {/* Avatar + Profilo */}
         <div style={{ position: "relative" }}>
           <button
-            style={avatarBtn}
-            onClick={() => setMenuOpen((v) => !v)}
-            aria-haspopup="menu"
-            aria-expanded={menuOpen}
+            type="button"
+            onClick={() => setMenuOpen(v => !v)}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 10,
+              background: "rgba(255,255,255,0.06)",
+              border: "1px solid rgba(255,255,255,0.12)",
+              color: "#D6E8FF",
+              padding: "6px 10px",
+              borderRadius: 999,
+              cursor: "pointer",
+            }}
           >
-            <span style={avatar}>
-              {user?.email ? user.email.substring(0, 1).toUpperCase() : "•"}
+            <span
+              style={{
+                width: 28, height: 28, borderRadius: "50%",
+                background: "#164d7b",
+                display: "grid", placeItems: "center",
+                fontWeight: 800, color: "#fff",
+              }}
+              aria-hidden
+            >
+              {avatarLetter}
             </span>
-            Profilo
+            <span>Profilo</span>
           </button>
 
           {menuOpen && (
             <div
-              role="menu"
               style={{
-                position: "absolute",
-                right: 0,
-                top: 44,
-                minWidth: 220,
-                background: "white",
-                color: "#0B2A4A",
-                borderRadius: 12,
-                boxShadow: "0 12px 30px rgba(0,0,0,.18)",
-                overflow: "hidden",
-                zIndex: 9999,
+                position: "absolute", right: 0, marginTop: 8, zIndex: 6000,
+                width: 230, background: "#fff", borderRadius: 12,
+                boxShadow: "0 12px 32px rgba(0,0,0,.2)", color: "#0b1a2b",
+                padding: 8
               }}
+              onMouseLeave={() => setMenuOpen(false)}
             >
               <div style={{ padding: "10px 12px", fontWeight: 700 }}>
-                {user?.email ?? "Ospite"}
+                {email ?? "Ospite"}
               </div>
-              <div style={{ height: 1, background: "#eef2f7" }} />
-              {!user && (
-                <Link
-                  href="/login"
-                  onClick={() => setMenuOpen(false)}
-                  style={menuItem}
-                >
-                  Accedi / Registrati
-                </Link>
-              )}
-              {user && (
+              <div className="dp-divider" />
+              {email ? (
                 <>
-                  <Link
-                    href="/create"
-                    onClick={() => setMenuOpen(false)}
-                    style={menuItem}
-                  >
-                    Crea spot
-                  </Link>
-                  <Link
-                    href="/favorites"
-                    onClick={() => setMenuOpen(false)}
-                    style={menuItem}
-                  >
-                    Preferiti
-                  </Link>
-                  <Link
-                    href="/settings"
-                    onClick={() => setMenuOpen(false)}
-                    style={menuItem}
-                  >
-                    Impostazioni
-                  </Link>
+                  <Link href="/create" className="menu-item" style={itemStyle}>Crea spot</Link>
+                  <Link href="#" className="menu-item" style={itemStyle}>Preferiti</Link>
+                  <Link href="#" className="menu-item" style={itemStyle}>Impostazioni</Link>
+                  <div className="dp-divider" />
                   <button
-                    onClick={async () => {
-                      await supabase.auth.signOut();
-                      setMenuOpen(false);
-                    }}
-                    style={{ ...menuItem, width: "100%", textAlign: "left" }}
+                    onClick={async () => { await supabase.auth.signOut(); location.reload(); }}
+                    style={{ ...itemStyle, width: "100%", textAlign: "left", background: "transparent", border: 0, cursor: "pointer" }}
                   >
                     Esci
                   </button>
                 </>
+              ) : (
+                <Link href="/auth" className="menu-item" style={itemStyle}>Accedi / Registrati</Link>
               )}
             </div>
           )}
@@ -190,10 +151,10 @@ export default function Header() {
   );
 }
 
-const menuItem: React.CSSProperties = {
+const itemStyle: React.CSSProperties = {
   display: "block",
   padding: "10px 12px",
+  borderRadius: 8,
   textDecoration: "none",
-  color: "#0B2A4A",
-  fontWeight: 600,
+  color: "#0b1a2b",
 };

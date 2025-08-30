@@ -1,14 +1,18 @@
-export type WaterType = "all" | "sea" | "river" | "lake";
-
+// app/types.ts
 export type Spot = {
-  id?: string | number;
-  name?: string;
-  waterType?: string;
-  lat?: number | string;
+  id: string | number;
+  name: string;
+  country?: string;
+  lat: number | string;
   lon?: number | string;
   lng?: number | string;
-  long?: number | string;
   rating?: number;
   difficulty?: number;
+  waterType?: string;
+  water_type?: string;
+  heightMeters?: number;
+  season?: string;
+  warnings?: string;
+  notes?: string;
   [k: string]: any;
 };

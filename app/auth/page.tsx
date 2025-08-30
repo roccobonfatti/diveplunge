@@ -1,158 +1,82 @@
 // app/auth/page.tsx
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
-import { useRouter } from "next/navigation";
-
-function Btn({
-  onClick,
-  children,
-}: {
-  onClick: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      style={{
-        width: "100%",
-        padding: "12px 14px",
-        borderRadius: 10,
-        border: "1px solid #d0d7de",
-        background: "#fff",
-        cursor: "pointer",
-        fontWeight: 600,
-        marginTop: 10,
-      }}
-    >
-      {children}
-    </button>
-  );
-}
+import { useSearchParams, useRouter } from "next/navigation";
 
 export default function AuthPage() {
   const router = useRouter();
+  const sp = useSearchParams();
+  const next = sp.get("next") || "/";
+
   const [email, setEmail] = useState("");
-  const [sending, setSending] = useState(false);
+  const [msg, setMsg] = useState<string | null>(null);
 
-  const baseRedirect = () =>
-    `${window.location.origin}/auth/callback`; // pagina di callback qui sotto
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      if (data.user) router.replace(next);
+    });
+  }, [next, router]);
 
-  async function oauth(provider: "google" | "apple" | "facebook" | "linkedin") {
+  const signWithProvider = async (provider: "google" | "facebook" | "apple" | "linkedin_oidc") => {
+    const redirectTo = `${location.origin}/auth/callback?next=${encodeURIComponent(next)}`;
     const { error } = await supabase.auth.signInWithOAuth({
       provider,
-      options: { redirectTo: baseRedirect() },
+      options: { redirectTo },
     });
-    if (error) alert(error.message);
-  }
+    if (error) setMsg(error.message);
+  };
 
-  async function emailMagic() {
-    if (!email) return alert("Inserisci una email");
-    setSending(true);
+  const magicLink = async () => {
+    setMsg(null);
+    const redirectTo = `${location.origin}/auth/callback?next=${encodeURIComponent(next)}`;
     const { error } = await supabase.auth.signInWithOtp({
       email,
-      options: {
-        emailRedirectTo: baseRedirect(),
-      },
+      options: { emailRedirectTo: redirectTo },
     });
-    setSending(false);
-    if (error) alert(error.message);
-    else alert("Ti abbiamo inviato un link di accesso via email ✅");
-  }
+    if (error) setMsg(error.message);
+    else setMsg("Ti abbiamo inviato un'email con il link di accesso.");
+  };
 
   return (
-    <div
-      style={{
-        minHeight: "100dvh",
-        display: "grid",
-        placeItems: "center",
-        background:
-          "linear-gradient(180deg, #0B2A4A 0%, #0E3A65 50%, #0b2a4a 100%)",
-      }}
-    >
-      <div
-        style={{
-          width: 380,
-          maxWidth: "90vw",
-          background: "white",
-          borderRadius: 16,
-          boxShadow: "0 20px 60px rgba(0,0,0,.25)",
-          padding: 22,
-        }}
-      >
-        <h1 style={{ margin: 0, fontSize: 26, fontWeight: 800 }}>Accedi</h1>
-        <p style={{ marginTop: 6, color: "#667085" }}>
-          Scegli un provider o usa il link via email.
-        </p>
+    <div style={{ display: "grid", placeItems: "center", height: "100vh", background: "#0b1a2b" }}>
+      <div style={{ width: 420, background: "#fff", padding: 24, borderRadius: 16, boxShadow: "0 20px 60px rgba(0,0,0,.35)" }}>
+        <div style={{ fontSize: 22, fontWeight: 900, marginBottom: 16 }}>Accedi / Registrati</div>
 
-        {/* OAuth providers */}
-        <Btn onClick={() => oauth("google")}>Continua con Google</Btn>
-        <Btn onClick={() => oauth("apple")}>Continua con Apple</Btn>
-        <Btn onClick={() => oauth("facebook")}>Continua con Facebook</Btn>
-        <Btn onClick={() => oauth("linkedin")}>Continua con LinkedIn</Btn>
-
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 8,
-            margin: "14px 0",
-            color: "#98A2B3",
-            fontSize: 12,
-          }}
-        >
-          <div style={{ height: 1, background: "#eef2f6", flex: 1 }} />
-          oppure
-          <div style={{ height: 1, background: "#eef2f6", flex: 1 }} />
+        <div style={{ display: "grid", gap: 8, marginBottom: 12 }}>
+          <button onClick={() => signWithProvider("google")} className="btn">Continua con Google</button>
+          <button onClick={() => signWithProvider("facebook")} className="btn">Continua con Facebook</button>
+          <button onClick={() => signWithProvider("apple")} className="btn">Continua con Apple</button>
+          <button onClick={() => signWithProvider("linkedin_oidc")} className="btn">Continua con LinkedIn</button>
         </div>
 
-        {/* Email magic link */}
+        <div className="dp-divider" />
+
         <div style={{ display: "grid", gap: 8 }}>
           <input
             type="email"
-            placeholder="tua@email.com"
+            placeholder="la-tua@email.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            style={{
-              padding: "12px 14px",
-              border: "1px solid #d0d7de",
-              borderRadius: 10,
-              outline: "none",
-            }}
+            style={{ border: "1px solid #d7e2f3", borderRadius: 10, padding: "10px 12px" }}
           />
-          <button
-            onClick={emailMagic}
-            disabled={sending}
-            style={{
-              padding: "12px 14px",
-              borderRadius: 10,
-              border: "none",
-              background: "#0E3A65",
-              color: "white",
-              fontWeight: 700,
-              cursor: "pointer",
-            }}
-          >
-            {sending ? "Invio in corso…" : "Mandami il link via email"}
+          <button onClick={magicLink} className="btn" style={{ background: "#0E3A65", color: "#fff" }}>
+            Invia link via email
           </button>
         </div>
 
-        <button
-          onClick={() => router.push("/")}
-          style={{
-            marginTop: 14,
-            width: "100%",
-            background: "transparent",
-            border: "none",
-            textDecoration: "underline",
-            cursor: "pointer",
-            color: "#0E3A65",
-          }}
-        >
-          Torna alla mappa
-        </button>
+        {msg && <div style={{ marginTop: 12 }}>{msg}</div>}
       </div>
+      <style jsx>{`
+        .btn {
+          border: 0;
+          border-radius: 10px;
+          padding: 10px 12px;
+          cursor: pointer;
+          background: #eef3ff;
+        }
+      `}</style>
     </div>
   );
 }
