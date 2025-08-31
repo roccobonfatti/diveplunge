@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef } from "react";
-import type { WaterType } from "@/app/types";
+import type { WaterType } from "../types";
 
 type Props = {
   onSearchPlace: (q: string) => void;

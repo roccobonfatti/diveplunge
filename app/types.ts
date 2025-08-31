@@ -1,4 +1,6 @@
 // app/types.ts
+export type WaterType = "sea" | "lake" | "river";
+
 export type Spot = {
   id: string | number;
   name: string;
