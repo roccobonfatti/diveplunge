@@ -1,36 +1,14 @@
 // app/auth/callback/page.tsx
-"use client";
+import { Suspense } from "react";
+import CallbackClient from "./CallbackClient";
 
-import { useEffect, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { supabase } from "../../lib/supabase";
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
-export default function Callback() {
-  const router = useRouter();
-  const sp = useSearchParams();
-  const next = sp.get("next") || "/";
-
-  const [msg, setMsg] = useState("Attendere, completamento login…");
-
-  useEffect(() => {
-    (async () => {
-      try {
-        // firma che non rompe il build: passa l'URL completo
-        const { error } = await supabase.auth.exchangeCodeForSession(window.location.href);
-        if (error) {
-          setMsg(error.message);
-        } else {
-          router.replace(next);
-        }
-      } catch (e: any) {
-        setMsg(e?.message || "Errore di autenticazione.");
-      }
-    })();
-  }, [next, router]);
-
+export default function CallbackPage() {
   return (
-    <div style={{ display: "grid", placeItems: "center", height: "100vh", color: "#fff" }}>
-      {msg}
-    </div>
+    <Suspense fallback={<div style={{ color: "#fff" }}>Caricamento…</div>}>
+      <CallbackClient />
+    </Suspense>
   );
 }
