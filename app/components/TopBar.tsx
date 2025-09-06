@@ -1,114 +1,68 @@
 "use client";
 
-import { useRef } from "react";
-import type { WaterType } from "../types";
+import React, { useRef, useState } from "react";
 
 type Props = {
-  onSearchPlace: (q: string) => void;
-  onFilterType?: (t: WaterType) => void;
-  onMinDiff?: (d: number) => void;
-  onMinRating?: (r: number) => void;
+  setCenter: (c: [number, number]) => void;
 };
 
-export default function TopBar({
-  onSearchPlace,
-  onFilterType,
-  onMinDiff,
-  onMinRating,
-}: Props) {
+export default function TopBar({ setCenter }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
+  const [loading, setLoading] = useState(false);
+  const [q, setQ] = useState("");
+
+  const handleSearch = async () => {
+    const query = (q || inputRef.current?.value || "").trim();
+    if (!query) return;
+    setLoading(true);
+    try {
+      const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
+        query
+      )}`;
+      const res = await fetch(url, {
+        headers: {
+          "Accept-Language": "it",
+          "User-Agent": "diveplunge/0.1 (admin@diveplunge.com)",
+        },
+      });
+      const data: any[] = await res.json();
+      if (Array.isArray(data) && data.length > 0) {
+        const first = data[0];
+        const lat = Number(first.lat);
+        const lon = Number(first.lon);
+        if (Number.isFinite(lat) && Number.isFinite(lon)) {
+          setCenter([lat, lon]);
+        }
+      }
+    } catch (e) {
+      console.error("search failed:", e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const onKey = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") handleSearch();
+  };
 
   return (
-    <div
-      style={{
-        position: "fixed",
-        top: 88 + 12, // sotto l’header
-        left: 0,
-        right: 0,
-        display: "flex",
-        justifyContent: "center",
-        zIndex: 6000, // >>> alto
-        pointerEvents: "none",
-      }}
-    >
-      <div
-        style={{
-          display: "flex",
-          gap: 8,
-          pointerEvents: "auto",
-          background: "rgba(255,255,255,.92)",
-          border: "1px solid rgba(0,0,0,.08)",
-          boxShadow: "0 4px 24px rgba(0,0,0,.12)",
-          padding: 8,
-          borderRadius: 12,
-          backdropFilter: "saturate(1.2) blur(4px)",
-        }}
+    <div className="flex items-center gap-2 p-2">
+      <input
+        ref={inputRef}
+        value={q}
+        onChange={(e) => setQ(e.target.value)}
+        onKeyDown={onKey}
+        placeholder="Cerca luogo…"
+        className="border rounded px-3 py-2 w-full max-w-md"
+        type="text"
+      />
+      <button
+        onClick={handleSearch}
+        disabled={loading}
+        className="px-3 py-2 rounded bg-blue-600 text-white disabled:opacity-60"
       >
-        <input
-          ref={inputRef}
-          placeholder="Cerca città o luogo (es. Cagliari)…"
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && inputRef.current) {
-              onSearchPlace(inputRef.current.value);
-            }
-          }}
-          style={{
-            width: 480,
-            padding: "10px 12px",
-            border: "1px solid #d0d7e2",
-            borderRadius: 10,
-          }}
-        />
-
-        <select
-          onChange={(e) => onFilterType?.(e.target.value as WaterType)}
-          defaultValue={"all"}
-          style={{ padding: "10px 12px", borderRadius: 10, border: "1px solid #d0d7e2" }}
-        >
-          <option value="all">Tutte le acque</option>
-          <option value="sea">Mare</option>
-          <option value="river">Fiume</option>
-          <option value="lake">Lago</option>
-        </select>
-
-        <select
-          onChange={(e) => onMinDiff?.(parseInt(e.target.value, 10))}
-          defaultValue={1}
-          style={{ padding: "10px 12px", borderRadius: 10, border: "1px solid #d0d7e2" }}
-        >
-          <option value="1">Diff ≥ 1</option>
-          <option value="2">Diff ≥ 2</option>
-          <option value="3">Diff ≥ 3</option>
-          <option value="4">Diff ≥ 4</option>
-          <option value="5">Diff ≥ 5</option>
-        </select>
-
-        <select
-          onChange={(e) => onMinRating?.(parseInt(e.target.value, 10))}
-          defaultValue={1}
-          style={{ padding: "10px 12px", borderRadius: 10, border: "1px solid #d0d7e2" }}
-        >
-          <option value="1">Rating ≥ 1</option>
-          <option value="2">Rating ≥ 2</option>
-          <option value="3">Rating ≥ 3</option>
-          <option value="4">Rating ≥ 4</option>
-          <option value="5">Rating ≥ 5</option>
-        </select>
-
-        <button
-          onClick={() => inputRef.current && onSearchPlace(inputRef.current.value)}
-          style={{
-            padding: "10px 14px",
-            borderRadius: 10,
-            background: "#0E3A65",
-            color: "white",
-            fontWeight: 700,
-            border: "none",
-          }}
-        >
-          Cerca
-        </button>
-      </div>
+        {loading ? "Cerco…" : "Cerca"}
+      </button>
     </div>
   );
 }

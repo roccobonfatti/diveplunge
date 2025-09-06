@@ -1,0 +1,21 @@
+// Modifiche per gestire il volo della mappa
+import { useEffect } from 'react';
+import { useMap } from 'react-leaflet';
+
+interface MapProps {
+  center: [number, number];
+}
+
+const Map: React.FC<MapProps> = ({ center }) => {
+  const map = useMap();
+
+  useEffect(() => {
+    if (center) {
+      map.flyTo(center, 10);
+    }
+  }, [center, map]);
+
+  return null; // Ritorna null poiché il componente mappa è gestito da Leaflet
+};
+
+export default Map;
