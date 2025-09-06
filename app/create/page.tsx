@@ -1,11 +1,19 @@
 // app/create/page.tsx
-import { Suspense } from "react";
-import CreateClient from "./CreateClient";
+"use client";
 
-export default function Page() {
+import { useSearchParams } from "next/navigation";
+
+export default function CreateSpotPage() {
+  const sp = useSearchParams();
+  const lat = sp.get("lat");
+  const lon = sp.get("lon");
+
   return (
-    <Suspense fallback={<div style={{ paddingTop: "calc(var(--header-h) + 24px)", color:"#fff" }}>Caricamento…</div>}>
-      <CreateClient />
-    </Suspense>
+    <div style={{ paddingTop: "calc(var(--header-h) + 24px)", maxWidth: 900, margin: "0 auto", color: "#0b1a2b" }}>
+      <h1>Crea un nuovo spot</h1>
+      <p>(Form basilare da completare in una fase successiva)</p>
+      <p>Coordinate suggerite dal click destro: <b>{lat ?? "-"}</b>, <b>{lon ?? "-"}</b></p>
+      {/* Qui in futuro: upload foto, nome, tipo acqua, altezza, ecc., salvataggio su Supabase */}
+    </div>
   );
 }

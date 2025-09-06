@@ -20,18 +20,6 @@
     "types": [
       "leaflet"
     ],
-    "baseUrl": ".",
-    "paths": {
-      "@/*": [
-        "./*"
-      ],
-      "@/types": [
-        "app/types"
-      ],
-      "@/lib/*": [
-        "app/lib/*"
-      ]
-    },
     "plugins": [
       {
         "name": "next"

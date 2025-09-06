@@ -1,49 +1,52 @@
-"use client";
+'use client';
 
-import React, { useRef, useState } from "react";
+import React, { useRef, useState } from 'react';
 
-type Props = {
-  setCenter: (c: [number, number]) => void;
-};
+type Center = [number, number];
+type Props = { setCenter: (c: Center) => void };
 
 export default function TopBar({ setCenter }: Props) {
-  const inputRef = useRef<HTMLInputElement>(null);
+  const [q, setQ] = useState('');
   const [loading, setLoading] = useState(false);
-  const [q, setQ] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
 
-  const handleSearch = async () => {
-    const query = (q || inputRef.current?.value || "").trim();
-    if (!query) return;
+  async function handleSearch() {
+    const query = q.trim();
+    if (!query) {
+      inputRef.current?.focus();
+      return;
+    }
+
     setLoading(true);
     try {
-      const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
-        query
-      )}`;
-      const res = await fetch(url, {
-        headers: {
-          "Accept-Language": "it",
-          "User-Agent": "diveplunge/0.1 (admin@diveplunge.com)",
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`,
+        {
+          headers: {
+            'Accept-Language': 'it',
+            'User-Agent': 'diveplunge/0.1 (admin@diveplunge.com)',
+          },
         },
-      });
-      const data: any[] = await res.json();
-      if (Array.isArray(data) && data.length > 0) {
-        const first = data[0];
-        const lat = Number(first.lat);
-        const lon = Number(first.lon);
+      );
+
+      const data: Array<{ lat: string; lon: string }> = await res.json();
+      if (Array.isArray(data) && data.length) {
+        const lat = Number(data[0].lat);
+        const lon = Number(data[0].lon);
         if (Number.isFinite(lat) && Number.isFinite(lon)) {
           setCenter([lat, lon]);
         }
       }
-    } catch (e) {
-      console.error("search failed:", e);
+    } catch (err) {
+      console.error('Search error:', err);
     } finally {
       setLoading(false);
     }
-  };
+  }
 
-  const onKey = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") handleSearch();
-  };
+  function onKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (e.key === 'Enter') handleSearch();
+  }
 
   return (
     <div className="flex items-center gap-2 p-2">
@@ -51,7 +54,7 @@ export default function TopBar({ setCenter }: Props) {
         ref={inputRef}
         value={q}
         onChange={(e) => setQ(e.target.value)}
-        onKeyDown={onKey}
+        onKeyDown={onKeyDown}
         placeholder="Cerca luogo…"
         className="border rounded px-3 py-2 w-full max-w-md"
         type="text"
@@ -61,7 +64,7 @@ export default function TopBar({ setCenter }: Props) {
         disabled={loading}
         className="px-3 py-2 rounded bg-blue-600 text-white disabled:opacity-60"
       >
-        {loading ? "Cerco…" : "Cerca"}
+        {loading ? 'Cerco…' : 'Cerca'}
       </button>
     </div>
   );
