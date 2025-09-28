@@ -111,7 +111,7 @@ function PanZoomControls() {
   return (
     <>
       <div className="dp-ctrls" aria-label="Controlli mappa">
-        {/* riga TOP (avvicinata all'ovale) */}
+        {/* riga TOP – distanza di nuovo uguale a L/R */}
         <div className="dp-ctrls-row top center">
           <button
             className="dp-arrow"
@@ -222,7 +222,7 @@ function PanZoomControls() {
           </button>
         </div>
 
-        {/* riga BOTTOM (avvicinata all'ovale) */}
+        {/* riga BOTTOM – distanza di nuovo uguale a L/R */}
         <div className="dp-ctrls-row bottom center">
           <button
             className="dp-arrow"
@@ -237,11 +237,10 @@ function PanZoomControls() {
 
       {/* --- STILI --- */}
       <style jsx>{`
-        /* tutto più in basso (~1.5 cm) */
         .dp-ctrls {
           position: fixed;
           left: 50%;
-          bottom: 16px; /* prima 52px */
+          bottom: 16px;
           transform: translateX(-50%);
           z-index: 4000;
           user-select: none;
@@ -252,25 +251,18 @@ function PanZoomControls() {
           align-items: center;
           justify-content: center;
         }
-        .dp-ctrls-row.center {
-          justify-content: center;
-        }
+        .dp-ctrls-row.center { justify-content: center; }
 
         /* distanza orizzontale coerente */
         .dp-ctrls-row.mid {
-          gap: 4px; /* same gap L/R vs ovale */
+          gap: 4px; /* stessa “aria” a sinistra/destra dell’ovale */
           margin: 0;
         }
 
-        /* avvicino su/giù all'ovale */
-        .dp-ctrls-row.top {
-          margin: 0 0 -2px 0; /* leggero overlap per ridurre il vuoto */
-        }
-        .dp-ctrls-row.bottom {
-          margin: -2px 0 0 0;
-        }
+        /* ✅ ripristino la distanza su/giù = 4px dall’ovale */
+        .dp-ctrls-row.top { margin: 0 0 4px 0; }
+        .dp-ctrls-row.bottom { margin: 4px 0 0 0; }
 
-        /* frecce (ridotte) */
         .dp-arrow {
           width: 30px;
           height: 30px;
@@ -293,30 +285,14 @@ function PanZoomControls() {
           box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
         }
 
-        /* ovale zoom compatto */
-        .dp-zoom-oval {
-          position: relative;
-          width: 84px;
-          height: 58px;
-        }
-        .dp-zoom-oval svg {
-          display: block;
-        }
+        .dp-zoom-oval { position: relative; width: 84px; height: 58px; }
+        .dp-zoom-oval svg { display: block; }
         .dp-zoom-oval .hit {
-          position: absolute;
-          left: 0;
-          right: 0;
-          height: 50%;
-          background: transparent;
-          border: 0;
-          cursor: pointer;
+          position: absolute; left: 0; right: 0; height: 50%;
+          background: transparent; border: 0; cursor: pointer;
         }
-        .dp-zoom-oval .hit.top {
-          top: 0;
-        }
-        .dp-zoom-oval .hit.bottom {
-          bottom: 0;
-        }
+        .dp-zoom-oval .hit.top { top: 0; }
+        .dp-zoom-oval .hit.bottom { bottom: 0; }
       `}</style>
     </>
   );
@@ -369,8 +345,7 @@ export default function Map({
       center={center}
       zoom={typeof zoom === "number" ? zoom : 5}
       minZoom={2}
-      className="w-screen h-screen"
-      style={{ background: "#cfe8ff" }}
+      style={{ width: "100%", height: "100%", background: "#cfe8ff" }}
       scrollWheelZoom
     >
       <TileLayer

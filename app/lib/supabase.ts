@@ -9,9 +9,11 @@ if (!url || !anon) {
   console.error("Supabase: manca NEXT_PUBLIC_SUPABASE_URL o NEXT_PUBLIC_SUPABASE_ANON_KEY");
 }
 
-/** Client unico, esportato come named export */
+// Client unico con sessione persistente sul browser
 export const supabase = createClient(url, anon, {
   auth: {
-    persistSession: false, // lato client non salviamo in storage
+    persistSession: true,       // <— resta loggato
+    autoRefreshToken: true,     // refresh automatico
+    detectSessionInUrl: true,
   },
 });
