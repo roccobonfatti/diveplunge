@@ -1,11 +1,7 @@
 {
   "compilerOptions": {
     "target": "ES2022",
-    "lib": [
-      "dom",
-      "dom.iterable",
-      "es2022"
-    ],
+    "lib": ["dom", "dom.iterable", "es2022"],
     "allowJs": false,
     "skipLibCheck": true,
     "strict": true,
@@ -17,23 +13,11 @@
     "isolatedModules": true,
     "jsx": "preserve",
     "incremental": true,
-    "types": [
-      "leaflet"
-    ],
-    "plugins": [
-      {
-        "name": "next"
-      }
-    ]
+    "types": ["leaflet"],
+    "plugins": [{ "name": "next" }],
+    "baseUrl": ".",
+    "paths": { "@/*": ["app/*"] }
   },
-  "include": [
-    "**/*.ts",
-    "**/*.tsx",
-    "env.d.ts",
-    "next-env.d.ts",
-    ".next/types/**/*.ts"
-  ],
-  "exclude": [
-    "node_modules"
-  ]
+  "include": ["**/*.ts", "**/*.tsx", "env.d.ts", "next-env.d.ts", ".next/types/**/*.ts"],
+  "exclude": ["node_modules"]
 }

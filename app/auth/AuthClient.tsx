@@ -1,125 +1,97 @@
-// app/auth/AuthClient.tsx
 "use client";
 
-import { useEffect, useState, Suspense } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
-import { supabase } from "../lib/supabase";
+import Image from "next/image";
+import { useState } from "react";
+import { supabase } from "@/lib/supabase";
+import Link from "next/link";
 
 export default function AuthClient() {
-  const router = useRouter();
-  const sp = useSearchParams();
-  const next = sp.get("next") || "/";
-
   const [email, setEmail] = useState("");
   const [msg, setMsg] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
 
-  useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      if (data.user) router.replace(next);
-    });
-  }, [next, router]);
-
-  const signWithProvider = async (
-    provider: "google" | "facebook" | "apple" | "linkedin_oidc"
-  ) => {
-    const redirectTo = `${location.origin}/auth/callback?next=${encodeURIComponent(
-      next
-    )}`;
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider,
-      options: { redirectTo },
-    });
-    if (error) setMsg(error.message);
-  };
-
-  const magicLink = async () => {
+  async function sendMagicLink(e: React.FormEvent) {
+    e.preventDefault();
     setMsg(null);
-    const redirectTo = `${location.origin}/auth/callback?next=${encodeURIComponent(
-      next
-    )}`;
+    setBusy(true);
+
     const { error } = await supabase.auth.signInWithOtp({
       email,
-      options: { emailRedirectTo: redirectTo },
+      options: { emailRedirectTo: `${location.origin}/auth/callback` },
     });
-    if (error) setMsg(error.message);
-    else setMsg("Ti abbiamo inviato un'email con il link di accesso.");
-  };
+
+    setBusy(false);
+    if (error) setMsg("Errore: " + error.message);
+    else setMsg("Controlla la tua email per completare l’accesso.");
+  }
 
   return (
-    <div
+    <main
+      className="min-h-screen text-white"
       style={{
-        display: "grid",
-        placeItems: "center",
-        height: "100vh",
-        background: "#0b1a2b",
+        background:
+          "radial-gradient(1200px 600px at 50% -10%, #174a7e60, transparent), linear-gradient(180deg, #0b2138 0%, #0e1a2b 100%)",
       }}
     >
-      <div
-        style={{
-          width: 420,
-          background: "#fff",
-          padding: 24,
-          borderRadius: 16,
-          boxShadow: "0 20px 60px rgba(0,0,0,.35)",
-        }}
-      >
-        <div style={{ fontSize: 22, fontWeight: 900, marginBottom: 16 }}>
-          Accedi / Registrati
+      <div className="mx-auto max-w-2xl px-6 py-16">
+        {/* LOGO + wordmark */}
+        <div className="w-full flex flex-col items-center mb-10">
+          <Image
+            src="/brand/diveplunge-logo-white.png"
+            alt="diveplunge"
+            width={220}
+            height={220}
+            priority
+          />
         </div>
 
-        <div style={{ display: "grid", gap: 8, marginBottom: 12 }}>
-          <button onClick={() => signWithProvider("google")} className="btn">
-            Continua con Google
-          </button>
-          <button onClick={() => signWithProvider("facebook")} className="btn">
-            Continua con Facebook
-          </button>
-          <button onClick={() => signWithProvider("apple")} className="btn">
-            Continua con Apple
-          </button>
-          <button
-            onClick={() => signWithProvider("linkedin_oidc")}
-            className="btn"
-          >
-            Continua con LinkedIn
-          </button>
+        {/* HERO COPY */}
+        <div className="text-center mb-8">
+          <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight">
+            Breath. Jump. Live.
+          </h1>
+          <p className="mt-4 text-lg md:text-xl text-white/85 leading-snug">
+            Libera la tua voglia di <b>respirare</b>, <b>saltar&nbsp;e&nbsp;vivere</b>
+            {" "}con la più grande community di <b>Diveplungers</b> al mondo.
+          </p>
+          <p className="mt-2 text-white/70">
+            Per l’iscrizione gratuita inserisci il tuo indirizzo email.
+          </p>
         </div>
 
-        <div className="dp-divider" />
-
-        <div style={{ display: "grid", gap: 8 }}>
+        {/* FORM EMAIL */}
+        <form
+          onSubmit={sendMagicLink}
+          className="mx-auto mt-6 max-w-xl flex gap-3"
+        >
           <input
             type="email"
-            placeholder="la-tua@email.com"
+            required
+            placeholder="email@esempio.com"
+            className="flex-1 rounded-lg border border-white/15 bg-white/10 px-4 py-3
+                       placeholder-white/60 outline-none focus:ring-2 focus:ring-blue-400"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            style={{
-              border: "1px solid #d7e2f3",
-              borderRadius: 10,
-              padding: "10px 12px",
-            }}
           />
           <button
-            onClick={magicLink}
-            className="btn"
-            style={{ background: "#0E3A65", color: "#fff" }}
+            disabled={busy}
+            className="rounded-lg bg-blue-600 hover:bg-blue-500 px-5 py-3 font-semibold
+                       shadow-lg shadow-blue-900/30 disabled:opacity-70"
           >
-            Invia link via email
+            {busy ? "Invio…" : "Invia link"}
           </button>
+        </form>
+
+        {/* ALTRO */}
+        <div className="text-center mt-4 text-sm text-white/75">
+          Vuoi creare un account con Nome/Cognome subito?{" "}
+          <Link href="/auth/signup" className="underline">Registrati qui</Link>
         </div>
 
-        {msg && <div style={{ marginTop: 12 }}>{msg}</div>}
+        {msg && (
+          <p className="text-center mt-6 text-sm text-white/90">{msg}</p>
+        )}
       </div>
-
-      <style jsx>{`
-        .btn {
-          border: 0;
-          border-radius: 10px;
-          padding: 10px 12px;
-          cursor: pointer;
-          background: #eef3ff;
-        }
-      `}</style>
-    </div>
+    </main>
   );
 }

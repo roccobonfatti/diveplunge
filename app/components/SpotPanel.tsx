@@ -1,15 +1,12 @@
-// app/components/SpotPanel.tsx
 "use client";
 
 import { useEffect, useState } from "react";
 import type { Spot } from "../types";
 import { supabase } from "../lib/supabase";
 import Link from "next/link";
+import OpenInMaps from "@/components/OpenInMaps";
 
-type Props = {
-  spot: Spot | null;
-  onClose: () => void;
-};
+type Props = { spot: Spot | null; onClose: () => void; };
 
 type Comment = {
   id: string;
@@ -17,7 +14,6 @@ type Comment = {
   user_id: string;
   content: string;
   created_at: string;
-  profiles?: { email?: string } | null;
 };
 
 export default function SpotPanel({ spot, onClose }: Props) {
@@ -41,7 +37,7 @@ export default function SpotPanel({ spot, onClose }: Props) {
         .select("id, spot_id, user_id, content, created_at")
         .eq("spot_id", spot.id)
         .order("created_at", { ascending: false });
-      if (!error) setComments(data as Comment[]);
+      if (!error && data) setComments(data as Comment[]);
     };
     load();
   }, [spot?.id]);
@@ -49,10 +45,7 @@ export default function SpotPanel({ spot, onClose }: Props) {
   const addComment = async () => {
     if (!spot || !text.trim()) return;
     const { data: user } = await supabase.auth.getUser();
-    if (!user.user) {
-      location.assign("/auth?next=/");
-      return;
-    }
+    if (!user.user) { location.assign("/auth?next=/"); return; }
     const { error } = await supabase.from("spot_comments").insert({
       spot_id: spot.id,
       user_id: user.user.id,
@@ -60,7 +53,6 @@ export default function SpotPanel({ spot, onClose }: Props) {
     });
     if (!error) {
       setText("");
-      // ricarica
       const { data } = await supabase
         .from("spot_comments")
         .select("*")
@@ -72,21 +64,17 @@ export default function SpotPanel({ spot, onClose }: Props) {
 
   if (!spot) return null;
 
+  const lat = Number(spot.lat);
+  const lon = Number(spot.lon ?? spot.lng);
+
   return (
     <aside
       style={{
         position: "fixed",
-        right: 16,
-        top: "calc(var(--header-h) + 16px)",
-        bottom: 16,
-        width: 360,
-        background: "#fff",
-        borderRadius: 16,
-        boxShadow: "0 16px 42px rgba(0,0,0,.22)",
-        zIndex: 6,
-        overflow: "hidden",
-        display: "flex",
-        flexDirection: "column",
+        right: 16, top: "calc(var(--header-h) + 16px)", bottom: 16,
+        width: 360, background: "#fff", borderRadius: 16,
+        boxShadow: "0 16px 42px rgba(0,0,0,.22)", zIndex: 6, overflow: "hidden",
+        display: "flex", flexDirection: "column",
       }}
     >
       <div style={{ padding: 16, borderBottom: "1px solid #eef2fb", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
@@ -95,7 +83,7 @@ export default function SpotPanel({ spot, onClose }: Props) {
       </div>
 
       <div style={{ padding: 16, overflow: "auto" }}>
-        <DL label="Posizione" value={`${spot.lat}, ${spot.lon ?? spot.lng}`} />
+        <DL label="Posizione" value={`${lat}, ${lon}`} />
         <DL label="Tipo acqua" value={spot.waterType ?? spot.water_type} />
         <DL label="Difficoltà" value={String(spot.difficulty ?? "-")} />
         <DL label="Rating" value={String(spot.rating ?? "-")} />
@@ -104,9 +92,12 @@ export default function SpotPanel({ spot, onClose }: Props) {
         {spot.warnings && <DL label="Avvertenze" value={spot.warnings} />}
         {spot.notes && <DL label="Note" value={spot.notes} />}
 
-        <div className="dp-divider" />
+        {Number.isFinite(lat) && Number.isFinite(lon) && (
+          <OpenInMaps lat={lat} lon={lon} label={spot.name ?? "Spot"} />
+        )}
 
-        {/* Commenti */}
+        <div className="dp-divider" style={{ margin: "14px 0", height: 1, background: "#eef2fb" }} />
+
         <div style={{ fontWeight: 800, marginBottom: 8 }}>Commenti</div>
 
         {me ? (

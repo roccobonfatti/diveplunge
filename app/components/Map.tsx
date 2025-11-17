@@ -98,20 +98,19 @@ function FollowCenter({
   useEffect(() => {
     const z = typeof zoom === "number" ? zoom : map.getZoom();
     map.flyTo(center, z, { duration: 0.6 });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [center[0], center[1], zoom]);
+  }, [center[0], center[1], zoom, map]);
   return null;
 }
 
-/* ---------- controlli bottom-center ---------- */
+/* ---------- controlli bottom-center (nascosti su mobile) ---------- */
 function PanZoomControls() {
   const map = useMap();
   const step = 150; // pixel di pan
 
   return (
     <>
-      <div className="dp-ctrls" aria-label="Controlli mappa">
-        {/* riga TOP – distanza di nuovo uguale a L/R */}
+      <div className="dp-ctrls hidden md:block" aria-label="Controlli mappa">
+        {/* riga TOP */}
         <div className="dp-ctrls-row top center">
           <button
             className="dp-arrow"
@@ -138,78 +137,25 @@ function PanZoomControls() {
           <div className="dp-zoom-oval" aria-hidden="true">
             <svg viewBox="0 0 100 68" width="100%" height="100%">
               <defs>
-                <filter
-                  id="dpShadow"
-                  x="-20%"
-                  y="-20%"
-                  width="140%"
-                  height="140%"
-                >
-                  <feDropShadow
-                    dx="0"
-                    dy="4"
-                    stdDeviation="6"
-                    floodColor="rgba(13,25,51,0.26)"
-                  />
+                <filter id="dpShadow" x="-20%" y="-20%" width="140%" height="140%">
+                  <feDropShadow dx="0" dy="4" stdDeviation="6" floodColor="rgba(13,25,51,0.26)" />
                 </filter>
               </defs>
               <ellipse
-                cx="50"
-                cy="34"
-                rx="49"
-                ry="32"
+                cx="50" cy="34" rx="49" ry="32"
                 fill="rgba(14,58,101,0.58)"
                 stroke="rgba(0,0,0,0.55)"
                 strokeWidth="2"
                 filter="url(#dpShadow)"
               />
-              <line
-                x1="12"
-                x2="88"
-                y1="34"
-                y2="34"
-                stroke="black"
-                strokeOpacity="0.7"
-                strokeWidth="2"
-              />
-              {/* + più alto, − più basso */}
-              <text
-                x="50"
-                y="19"
-                textAnchor="middle"
-                dominantBaseline="middle"
-                fontSize="28"
-                fontWeight="900"
-                fill="#fff"
-              >
-                +
-              </text>
-              <text
-                x="50"
-                y="49"
-                textAnchor="middle"
-                dominantBaseline="middle"
-                fontSize="28"
-                fontWeight="900"
-                fill="#fff"
-              >
-                −
-              </text>
+              <line x1="12" x2="88" y1="34" y2="34" stroke="black" strokeOpacity="0.7" strokeWidth="2" />
+              <text x="50" y="19" textAnchor="middle" dominantBaseline="middle" fontSize="28" fontWeight="900" fill="#fff">+</text>
+              <text x="50" y="49" textAnchor="middle" dominantBaseline="middle" fontSize="28" fontWeight="900" fill="#fff">−</text>
             </svg>
 
             {/* aree cliccabili */}
-            <button
-              className="hit top"
-              aria-label="Zoom in"
-              title="Zoom in"
-              onClick={() => map.setZoom(map.getZoom() + 1)}
-            />
-            <button
-              className="hit bottom"
-              aria-label="Zoom out"
-              title="Zoom out"
-              onClick={() => map.setZoom(map.getZoom() - 1)}
-            />
+            <button className="hit top" aria-label="Zoom in" title="Zoom in" onClick={() => map.setZoom(map.getZoom() + 1)} />
+            <button className="hit bottom" aria-label="Zoom out" title="Zoom out" onClick={() => map.setZoom(map.getZoom() - 1)} />
           </div>
 
           <button
@@ -222,7 +168,7 @@ function PanZoomControls() {
           </button>
         </div>
 
-        {/* riga BOTTOM – distanza di nuovo uguale a L/R */}
+        {/* riga BOTTOM */}
         <div className="dp-ctrls-row bottom center">
           <button
             className="dp-arrow"
@@ -245,21 +191,8 @@ function PanZoomControls() {
           z-index: 4000;
           user-select: none;
         }
-
-        .dp-ctrls-row {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-        .dp-ctrls-row.center { justify-content: center; }
-
-        /* distanza orizzontale coerente */
-        .dp-ctrls-row.mid {
-          gap: 4px; /* stessa “aria” a sinistra/destra dell’ovale */
-          margin: 0;
-        }
-
-        /* ✅ ripristino la distanza su/giù = 4px dall’ovale */
+        .dp-ctrls-row { display: flex; align-items: center; justify-content: center; }
+        .dp-ctrls-row.mid { gap: 4px; }
         .dp-ctrls-row.top { margin: 0 0 4px 0; }
         .dp-ctrls-row.bottom { margin: 4px 0 0 0; }
 
@@ -280,10 +213,7 @@ function PanZoomControls() {
           cursor: pointer;
           transition: transform 120ms ease, box-shadow 120ms ease;
         }
-        .dp-arrow:active {
-          transform: translateY(1px);
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
-        }
+        .dp-arrow:active { transform: translateY(1px); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25); }
 
         .dp-zoom-oval { position: relative; width: 84px; height: 58px; }
         .dp-zoom-oval svg { display: block; }
