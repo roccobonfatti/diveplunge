@@ -1,29 +1,25 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+import Header from "@/components/Header";
+import { LangProvider } from "./components/LangProvider";
+import { SessionProvider } from "@/providers/SessionProvider";
 
 export const metadata: Metadata = {
   title: "diveplunge",
   description: "Breath. Jump. Live.",
+  manifest: "/manifest.webmanifest",
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{ children: React.ReactNode }>) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        {children}
+    <html lang="it">
+      <body>
+        <SessionProvider>
+          <Header />
+          <div style={{ paddingTop: 76 }}>
+            <LangProvider>{children}</LangProvider>
+          </div>
+        </SessionProvider>
       </body>
     </html>
   );
