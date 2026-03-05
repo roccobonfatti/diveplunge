@@ -2,10 +2,6 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  eslint: {
-    // Evita che la build fallisca per regole ESLint (il type-check rimane attivo)
-    ignoreDuringBuilds: true,
-  },
   typescript: {
     // Se vuoi forzare la build anche con errori TS, metti true (sconsigliato)
     ignoreBuildErrors: false,
