@@ -83,14 +83,18 @@ export default function SpotPanel({ spot, onClose }: Props) {
       </div>
 
       <div style={{ padding: 16, overflow: "auto" }}>
+        {spot.country && <DL label="Paese" value={[spot.country, spot.region, spot.city].filter(Boolean).join(", ")} />}
         <DL label="Posizione" value={`${lat}, ${lon}`} />
-        <DL label="Tipo acqua" value={spot.waterType ?? spot.water_type} />
-        <DL label="Difficoltà" value={String(spot.difficulty ?? "-")} />
-        <DL label="Rating" value={String(spot.rating ?? "-")} />
-        <DL label="Altezza (m)" value={String(spot.heightMeters ?? "-")} />
+        <DL label="Tipo acqua" value={waterTypeLabel(spot.waterType ?? spot.water_type)} />
+        {spot.subType && <DL label="Attività" value={subTypeLabel(spot.subType)} />}
+        <DL label="Difficoltà" value={difficultyLabel(spot.difficulty)} />
+        <DL label="Rating" value={spot.rating ? "★".repeat(Math.round(Number(spot.rating))) + ` (${spot.rating}/5)` : "-"} />
+        <DL label="Altezza salto (m)" value={spot.heightMeters ? `${spot.heightMeters}m` : "-"} />
+        {spot.depthMeters && <DL label="Profondità acqua (m)" value={`${spot.depthMeters}m`} />}
         <DL label="Stagione" value={spot.season ?? "-"} />
-        {spot.warnings && <DL label="Avvertenze" value={spot.warnings} />}
-        {spot.notes && <DL label="Note" value={spot.notes} />}
+        {spot.warnings && <DL label="⚠️ Avvertenze" value={spot.warnings} />}
+        {spot.notes && <DL label="Descrizione" value={spot.notes} />}
+        {spot.directions && <DL label="Come arrivarci" value={spot.directions} />}
 
         {Number.isFinite(lat) && Number.isFinite(lon) && (
           <OpenInMaps lat={lat} lon={lon} label={spot.name ?? "Spot"} />
@@ -140,4 +144,31 @@ function DL({ label, value }: { label: string; value?: string }) {
       <div style={{ fontWeight: 600 }}>{value ?? "-"}</div>
     </div>
   );
+}
+
+function waterTypeLabel(wt?: string): string {
+  const map: Record<string, string> = {
+    sea: "Mare", lake: "Lago", river: "Fiume", cenote: "Cenote",
+    fjord: "Fiordo", spring: "Sorgente", waterfall: "Cascata",
+  };
+  return wt ? (map[wt.toLowerCase()] ?? wt) : "-";
+}
+
+function subTypeLabel(st?: string): string {
+  const map: Record<string, string> = {
+    cliff_diving: "Cliff Diving", cliff_jumping: "Cliff Jumping",
+    wild_swimming: "Wild Swimming", scuba: "Scuba Diving",
+    freediving: "Freediving", canyoning: "Canyoning",
+    bridge_jump: "Bridge Jump", cenote: "Cenote Diving",
+    waterfall_jump: "Tuffo da Cascata", blue_hole: "Blue Hole",
+    tombstoning: "Tombstoning", coasteering: "Coasteering",
+    deep_water_solo: "Deep Water Solo",
+  };
+  return st ? (map[st.toLowerCase()] ?? st.replace(/_/g, " ")) : "-";
+}
+
+function difficultyLabel(d?: number): string {
+  if (!d) return "-";
+  const labels = ["", "① Principiante", "② Facile", "③ Intermedio", "④ Avanzato", "⑤ Expert"];
+  return labels[d] ?? String(d);
 }

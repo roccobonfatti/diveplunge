@@ -3,6 +3,8 @@ export type Spot = {
   id: string | number;
   name: string;
   country?: string;
+  region?: string;
+  city?: string;
   lat: number | string;
   lon?: number | string;
   lng?: number | string;
@@ -11,8 +13,13 @@ export type Spot = {
   waterType?: string;
   water_type?: string;
   heightMeters?: number;
+  depthMeters?: number;
   season?: string;
   warnings?: string;
   notes?: string;
+  directions?: string;
+  subType?: string;
+  image_url?: string;
+  photoSearchTerm?: string;
   [k: string]: any;
 };

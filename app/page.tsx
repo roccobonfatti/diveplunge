@@ -4,7 +4,6 @@
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Header from "./components/Header";
-import { spots as STATIC_SPOTS } from "./data/spots";
 import type { Spot } from "./types";
 import { supabase } from "./lib/supabase";
 import { useRouter } from "next/navigation";
@@ -33,17 +32,75 @@ export default function Home() {
   const [zoom, setZoom] = useState<number>(5);
   const [selected, setSelected] = useState<Spot | null>(null);
 
-  /* --------------------------- DATASET / FILTRO --------------------------- */
-  const [filterType, setFilterType] =
+  /* --------------------------- LOAD SPOTS FROM SUPABASE --------------------------- */
+  const [allSpots, setAllSpots] = useState<Spot[]>([]);
+  const [loadingSpots, setLoadingSpots] = useState(true);
+
+  useEffect(() => {
+    async function fetchSpots() {
+      setLoadingSpots(true);
+      const { data, error } = await supabase
+        .from("spots")
+        .select("*")
+        .order("name");
+      if (!error && data) {
+        const mapped: Spot[] = data.map((row: any) => ({
+          id: row.slug || row.id,
+          name: row.name,
+          country: row.country,
+          lat: row.lat,
+          lon: row.lon,
+          rating: row.rating ? Number(row.rating) : undefined,
+          difficulty: row.difficulty,
+          waterType: row.water_type,
+          water_type: row.water_type,
+          heightMeters: row.height_m,
+          season: row.season,
+          warnings: row.warnings,
+          notes: row.notes,
+          image_url: row.image_url,
+          region: row.region,
+          city: row.city,
+          depthMeters: row.depth_m,
+          directions: row.directions,
+          subType: row.sub_type,
+          photoSearchTerm: row.photo_search_term,
+        }));
+        setAllSpots(mapped);
+      }
+      setLoadingSpots(false);
+    }
+    fetchSpots();
+  }, []);
+
+  /* --------------------------- DATASET / FILTRI --------------------------- */
+  const [filterWater, setFilterWater] =
     useState<"all" | "sea" | "lake" | "river">("all");
+  const [filterActivity, setFilterActivity] =
+    useState<"all" | "tuffo" | "immersione" | "snorkeling">("all");
+
+  const TUFFO_TYPES = ["cliff_jumping", "cliff_diving", "bridge_jump", "waterfall_jump", "tombstoning", "coasteering", "deep_water_solo"];
+  const IMMERSIONE_TYPES = ["scuba", "diving", "freediving", "cenote", "blue_hole"];
+  const SNORKELING_TYPES = ["wild_swimming", "snorkeling"];
 
   const spots = useMemo(() => {
-    const merged = STATIC_SPOTS;
-    if (filterType === "all") return merged;
-    return merged.filter(
-      (s) => (s.waterType ?? s.water_type ?? "").toLowerCase() === filterType
-    );
-  }, [filterType]);
+    let filtered = allSpots;
+    if (filterWater !== "all") {
+      filtered = filtered.filter(
+        (s) => (s.waterType ?? s.water_type ?? "").toLowerCase() === filterWater
+      );
+    }
+    if (filterActivity !== "all") {
+      const allowed =
+        filterActivity === "tuffo" ? TUFFO_TYPES :
+        filterActivity === "immersione" ? IMMERSIONE_TYPES :
+        SNORKELING_TYPES;
+      filtered = filtered.filter((s) =>
+        allowed.includes((s.subType ?? "").toLowerCase())
+      );
+    }
+    return filtered;
+  }, [filterWater, filterActivity, allSpots]);
 
   /* --------------------------- HANDLERS --------------------------- */
   const handleSpotClick = useCallback(
@@ -179,8 +236,8 @@ export default function Home() {
             />
 
             <select
-              value={filterType}
-              onChange={(e) => setFilterType(e.target.value as any)}
+              value={filterWater}
+              onChange={(e) => setFilterWater(e.target.value as any)}
               style={{
                 border: "1px solid #d7e2f3",
                 borderRadius: 10,
@@ -193,6 +250,23 @@ export default function Home() {
               <option value="sea">Mare</option>
               <option value="lake">Lago</option>
               <option value="river">Fiume</option>
+            </select>
+
+            <select
+              value={filterActivity}
+              onChange={(e) => setFilterActivity(e.target.value as any)}
+              style={{
+                border: "1px solid #d7e2f3",
+                borderRadius: 10,
+                padding: "10px 12px",
+                background: "#fff",
+              }}
+              aria-label="Filtra per attività"
+            >
+              <option value="all">Tutte le attività</option>
+              <option value="tuffo">Tuffo</option>
+              <option value="immersione">Immersione</option>
+              <option value="snorkeling">Snorkeling</option>
             </select>
 
             <button
